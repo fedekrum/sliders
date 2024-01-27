@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Sliders</title>
+    <link href="style.css" rel="stylesheet" />
+    <link href="nouislider.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <nav id="navbar" class="navbar">
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#mode">Mode</a></li>
+        <li class="text-right"><span id="viewport"></span>&nbsp</li>
+      </ul>
+    </nav>
+    <div id="sliderContainer" class="slider-container"></div>
+    <footer class="pagination-footer">
+      <div class="pagination">
+        <button id="prevBtn" onclick="changePage(-1)">&nbsp&lt&nbsp</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" onclick="changePage(1)">&nbsp&gt&nbsp</button>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()">
+          Fullscreen
+        </button>
+        <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
+        <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+        <button id="downloadBtn" onclick="saveCookiesToJson()">Download</button>
+        <button id="uploadBtn" onclick="loadCookiesFromJson()">Upload</button>
+      </div>
+    </footer>
+
+    <script src="nouislider.min.js"></script>
+    <script>
+      // -------------------------------- Global  Variables ---------------------------------
+      let sliderWidthIncludingMargin = 70;
+      let sliderHeightIncludingMargin = 290;
+      let footerHeight = 30;
+      let menuHeight = 30;
+      let totalSliders = 512; // habra que sacarlo de la cantidad disponibles en el ESPixel
+      let blackout = false;
+      let blackoutTemp = [];
+
+      let currentPage = 1;
+      let slidersPerPage;
+      let totalNumberOfPages;
+
+      let sliderValues;
+      let menuEnable;
+
+      // -------------------------------- Get , Set and refresh Cookies ---------------------------------
+      if (doesCookieExist("actualValues")) {
+        let jsonString = getCookie("actualValues");
+        sliderValues = jsonString ? JSON.parse(jsonString) : [];
+      } else {
+        sliderValues = new Array(totalSliders).fill(0);
+      }
+      setCookie("actualValues", JSON.stringify(sliderValues), 365);
+
+      if (doesCookieExist("menuEnable")) {
+        menuEnable = getCookie("menuEnable");
+      } else {
+        menuEnable = true;
+      }
+      setCookie("menuEnable", menuEnable, 365);
+      function updateLayout() {
+        // -------------------------------- Calculations ---------------------------------
+        // Calcular el número de deslizadores por fila
+        const slidersPerRow = Math.floor(
+          window.innerWidth / sliderWidthIncludingMargin
+        );
+
+        // Calcular el número de filas por página
+        const rowsPerPage = Math.floor(
+          (window.innerHeight - footerHeight - (menuEnable ? menuHeight : 0)) /
+            sliderHeightIncludingMargin
+        );
+
+        const container = document.getElementById("sliderContainer");
+        container.innerHTML = "";
+
+        slidersPerPage =
+          Math.floor(window.innerWidth / sliderWidthIncludingMargin - 1) *
+          Math.floor(
+            (window.innerHeight -
+              footerHeight -
+              (menuEnable ? menuHeight : 0)) /
+              sliderHeightIncludingMargin
+          );
+        totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
+
+        let start = (currentPage - 1) * slidersPerPage;
+        let end = Math.min(start + slidersPerPage, totalSliders);
+        let slidersInCurrentRow = 0;
+
+        // -------------------------------- View ---------------------------------
+        // Actualizar el texto del viewport en la página
+        document.getElementById(
+          "viewport"
+        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
+        for (let i = start; i < end; i++) {
+          let sliderWrapper = document.createElement("div");
+          sliderWrapper.classList.add("slider-wrapper");
+
+          let nameLabel = document.createElement("div");
+          nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
+          sliderWrapper.appendChild(nameLabel);
+
+          let valueDisplay = document.createElement("div");
+          valueDisplay.textContent = sliderValues[i];
+          sliderWrapper.appendChild(valueDisplay);
+
+          let slider = document.createElement("div");
+          sliderWrapper.appendChild(slider);
+          container.appendChild(sliderWrapper);
+
+          noUiSlider.create(slider, {
+            start: sliderValues[i],
+            orientation: "vertical",
+            direction: "rtl",
+            range: {
+              min: 0,
+              max: 255,
+            },
+            connect: [true, false], // Conecta el rango inferior a la manija del deslizador
+            // ... cualquier otra configuración ...
+          });
+
+          slider.noUiSlider.on("update", function (values, handle) {
+            let value = Math.trunc(values[handle]);
+            if (!blackout) {
+              valueDisplay.textContent = value;
+              sliderValues[i] = value;
+            }
+          });
+
+          slider.noUiSlider.on("start", function () {
+            valueDisplay.style.color = "red";
+          });
+
+          slider.noUiSlider.on("end", function () {
+            valueDisplay.style.color = "black";
+            const jsonString = JSON.stringify(sliderValues);
+            document.cookie = `actualValues=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+          });
+
+          // Increment the counter for sliders in the current row
+          slidersInCurrentRow++;
+
+          // Insert a "row break" after every full row except for the last element
+          if (
+            slidersInCurrentRow ===
+              Math.floor(window.innerWidth / sliderWidthIncludingMargin) - 1 &&
+            i < end - 1
+          ) {
+            let rowBreak = document.createElement("div");
+            rowBreak.style.width = "100%";
+            container.appendChild(rowBreak);
+            // Reset the counter for the next row
+            slidersInCurrentRow = 0;
+          }
+        }
+
+        updatePaginationInfo();
+      }
+
+      function changePage(direction) {
+        currentPage += direction;
+        currentPage = Math.max(1, Math.min(currentPage, totalNumberOfPages));
+        updateLayout();
+      }
+
+      function updatePaginationInfo() {
+        document.getElementById(
+          "pageInfo"
+        ).textContent = `${currentPage}-${totalNumberOfPages}`;
+        document.getElementById("prevBtn").disabled = currentPage <= 1;
+        document.getElementById("nextBtn").disabled =
+          currentPage >= totalNumberOfPages;
+      }
+
+      // ----------------------------------Buttons and Keyboard controls -------------------------------------
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+          } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
+      }
+
+      function toggleBlackout() {
+        blackout = !blackout;
+        if (blackout) {
+          blackoutTemp = [...sliderValues];
+          sliderValues = new Array(totalSliders).fill(0);
+        } else {
+          sliderValues = [...blackoutTemp];
+        }
+        updateLayout();
+      }
+
+      function toggleNavbarHide() {
+        menuEnable = !menuEnable;
+        var navbar = document.getElementById("navbar");
+        if (menuEnable) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
+        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
+        updateLayout();
+      }
+
+      window.onload = updateLayout;
+      window.onresize = updateLayout;
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+          changePage(-1);
+        } else if (event.key === "ArrowRight") {
+          changePage(1);
+        }
+
+        if (event.key === "f" || event.key === "F") {
+          toggleFullscreen();
+        }
+
+        if (event.key === "b" || event.key === "B") {
+          toggleBlackout();
+        }
+
+        if (event.key === "m" || event.key === "M") {
+          toggleNavbarHide();
+        }
+      });
+
+      // Helper Fuctions ------------------------------------------------------
+      function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(";");
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) == " ") c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) == 0)
+            return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
+
+      function setCookie(name, value, days = 400) {
+        let expires = "";
+        if (days) {
+          const date = new Date();
+          date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+          expires = "; expires=" + date.toUTCString();
+        }
+        const cookieString = name + "=" + (value || "") + expires + "; path=/";
+        console.log("Setting cookie:", cookieString); // Log the cookie string
+        document.cookie = cookieString;
+      }
+
+      function doesCookieExist(name) {
+        // Create the cookie name string with equal sign
+        const nameEQ = name + "=";
+        // Split document.cookie on semicolons into an array of all the cookies
+        const ca = document.cookie.split(";");
+        // Loop through the array elements
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          // Remove leading whitespace from the cookie string
+          while (c.charAt(0) == " ") c = c.substring(1, c.length);
+          // Check if this cookie string contains the name we're looking for
+          if (c.indexOf(nameEQ) == 0) return true;
+        }
+        return false;
+      }
+
+      // Download cookies to a file
+      function saveCookiesToJson(filename = "ConsoleConfig.json") {
+        const cookies = document.cookie.split(";");
+        const cookieJson = {};
+
+        cookies.forEach((cookie) => {
+          const [name, value] = cookie.split("=").map((c) => c.trim());
+          if (name && value) {
+            cookieJson[name] = decodeURIComponent(value);
+          }
+        });
+
+        const jsonStr = JSON.stringify(cookieJson);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      // Upload cookies from a file
+      function loadCookiesFromJson() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) {
+            console.error("No file selected.");
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const contents = event.target.result;
+            try {
+              const cookies = JSON.parse(contents);
+              Object.keys(cookies).forEach((name) => {
+                console.log(`Setting cookie: ${name} = ${cookies[name]}`);
+                setCookie(name, cookies[name]);
+              });
+              console.log("All cookies set.");
+
+              // Call updateLayout here, after all cookies are set
+              let jsonString = getCookie("actualValues");
+              sliderValues = jsonString ? JSON.parse(jsonString) : [];
+              jsonString = getCookie("menuEnable");
+              menuEnable = jsonString ? JSON.parse(jsonString) : [];
+              updateLayout();
+            } catch (error) {
+              console.error("Error parsing JSON:", error);
+            }
+          };
+
+          reader.onerror = (error) =>
+            console.error("Error reading file:", error);
+
+          reader.readAsText(file);
+        };
+
+        input.click();
+        let jsonString = getCookie("actualValues");
+        sliderValues = jsonString ? JSON.parse(jsonString) : [];
+        jsonString = getCookie("menuEnable");
+        menuEnable = jsonString ? JSON.parse(jsonString) : [];
+      }
+
+      function openFileInput() {
+        const fileInput = document.getElementById("fileInput");
+        fileInput.click();
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        uploadCookiesFromFile(file);
+      }
+    </script>
+  </body>
+</html>
