@@ -8,12 +8,13 @@
     <link href="nouislider.min.css" rel="stylesheet" />
   </head>
   <body>
-    <nav id="navbar" class="navbar">
+    <nav id="navbar" class="navbar" hidden>
       <ul>
-        <li><a href="#home">Home</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#about">About</a></li>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="#file">File</a></li>
         <li><a href="#mode">Mode</a></li>
+        <li><a href="#sliders">Sliders</a></li>
+        <li><a href="#scenes">Scenes</a></li>
         <li class="text-right"><span id="viewport"></span>&nbsp</li>
       </ul>
     </nav>
@@ -28,8 +29,12 @@
         </button>
         <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
         <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
-        <button id="downloadBtn" onclick="saveCookiesToJson()">Download</button>
-        <button id="uploadBtn" onclick="loadCookiesFromJson()">Upload</button>
+        <button id="downloadBtn" onclick="saveCookiesToJson()">
+          Save in Downloads
+        </button>
+        <button id="uploadBtn" onclick="loadCookiesFromJson()">
+          Load from File
+        </button>
       </div>
     </footer>
 
@@ -43,6 +48,7 @@
       let totalSliders = 512; // habra que sacarlo de la cantidad disponibles en el ESPixel
       let blackout = false;
       let blackoutTemp = [];
+      let selectedSliders = [];
 
       let currentPage = 1;
       let slidersPerPage;
@@ -52,20 +58,33 @@
       let menuEnable;
 
       // -------------------------------- Get , Set and refresh Cookies ---------------------------------
+
+      // actualValues
       if (doesCookieExist("actualValues")) {
         let jsonString = getCookie("actualValues");
         sliderValues = jsonString ? JSON.parse(jsonString) : [];
       } else {
         sliderValues = new Array(totalSliders).fill(0);
       }
-      setCookie("actualValues", JSON.stringify(sliderValues), 365);
+      setCookie("actualValues", JSON.stringify(sliderValues), 400);
 
+      // selectedSliders
+      if (doesCookieExist("selectedSliders")) {
+        let jsonString = getCookie("selectedSliders");
+        selectedSliders = jsonString ? JSON.parse(jsonString) : [];
+      } else {
+        selectedSliders = new Array(totalSliders).fill(0);
+      }
+      setCookie("selectedSliders", JSON.stringify(selectedSliders), 400);
+
+      // menuEnable
       if (doesCookieExist("menuEnable")) {
-        menuEnable = getCookie("menuEnable");
+        menuEnable = JSON.parse(getCookie("menuEnable"));
       } else {
         menuEnable = true;
       }
-      setCookie("menuEnable", menuEnable, 365);
+      setCookie("menuEnable", JSON.stringify(menuEnable), 400);
+
       function updateLayout() {
         // -------------------------------- Calculations ---------------------------------
         // Calcular el número de deslizadores por fila
@@ -97,6 +116,15 @@
         let slidersInCurrentRow = 0;
 
         // -------------------------------- View ---------------------------------
+
+        // Actualizael navbar
+        var navbar = document.getElementById("navbar");
+        if (menuEnable) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
+
         // Actualizar el texto del viewport en la página
         document.getElementById(
           "viewport"
@@ -221,6 +249,12 @@
 
       function toggleNavbarHide() {
         menuEnable = !menuEnable;
+        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
+        updateLayout();
+      }
+
+      function toggleNavbarHide() {
+        menuEnable = !menuEnable;
         var navbar = document.getElementById("navbar");
         if (menuEnable) {
           navbar.removeAttribute("hidden");
@@ -230,9 +264,6 @@
         setCookie("menuEnable", JSON.stringify(menuEnable), 365);
         updateLayout();
       }
-
-      window.onload = updateLayout;
-      window.onresize = updateLayout;
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "ArrowLeft") {
@@ -253,6 +284,9 @@
           toggleNavbarHide();
         }
       });
+
+      window.onload = updateLayout();
+      window.onresize = updateLayout();
 
       // Helper Fuctions ------------------------------------------------------
       function getCookie(name) {
