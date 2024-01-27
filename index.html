@@ -228,9 +228,6 @@
         renderSliders();
       }
 
-      window.onload = updateLayout;
-      window.onresize = updateLayout;
-
       document.addEventListener("keydown", (event) => {
         if (event.key === "ArrowLeft") {
           changePage(-1);
@@ -250,6 +247,9 @@
           toggleNavbarHide();
         }
       });
+
+      window.onload = updateLayout;
+      window.onresize = updateLayout;
     </script>
     <script src="helper.js"></script>
   </body>
