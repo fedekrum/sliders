@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Sliders</title>
+    <link href="style.css" rel="stylesheet" />
+    <link href="nouislider.min.css" rel="stylesheet" />
+    <nav id="navbar" class="navbar">
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#mode">Mode</a></li>
+        <li class="text-right"><span id="viewport"></span>&nbsp</li>
+      </ul>
+    </nav>
+  </head>
+  <body>
+    <div id="sliderContainer" class="slider-container"></div>
+    <footer class="pagination-footer">
+      <div class="pagination">
+        <button id="prevBtn" onclick="changePage(-1)">&nbsp&lt&nbsp</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" onclick="changePage(1)">&nbsp&gt&nbsp</button>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()">
+          Fullscreen
+        </button>
+        <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
+        <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+      </div>
+    </footer>
+
+    <script src="nouislider.min.js"></script>
+    <script>
+      let currentPage = 1;
+      let totalSliders = 512;
+      let slidersPerPage;
+      let totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
+      let sliderValues;
+      if (doesCookieExist("actualState")) {
+        let jsonString = getCookie("actualState");
+        sliderValues = jsonString ? JSON.parse(jsonString) : [];
+      } else {
+        sliderValues = new Array(totalSliders).fill(0);
+      }
+
+      let blackout = false;
+      let blackoutTemp = [];
+
+      let sliderWidthIncludingMargin;
+      let sliderHeightIncludingMargin;
+      let footerHeight;
+      let menuHeight;
+
+      function updateLayout() {
+        sliderWidthIncludingMargin = 70; // Asumiendo que cada slider tiene un ancho total de 70px incluyendo márgenes
+        sliderHeightIncludingMargin = 290; // Asumiendo que cada slider tiene un alto total de 290px incluyendo márgenes
+        menuHeight = 30; // Altura del menu
+        footerHeight = 30; // Altura del footer
+
+        // Calcular el número de deslizadores por fila
+        const slidersPerRow = Math.floor(
+          window.innerWidth / sliderWidthIncludingMargin
+        );
+
+        // Calcular el número de filas por página
+        const rowsPerPage = Math.floor(
+          (window.innerHeight - footerHeight - menuHeight) /
+            sliderHeightIncludingMargin
+        );
+
+        // Calcular el total de deslizadores por página (redondeando hacia arriba para llenar la fila)
+        slidersPerPage = slidersPerRow * rowsPerPage;
+
+        // Asegurarse de que hay al menos un deslizador por página
+        slidersPerPage = Math.max(slidersPerPage, 1);
+
+        // Calcular el número total de páginas
+        totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
+
+        // Actualizar el texto del viewport en la página
+        document.getElementById(
+          "viewport"
+        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
+        renderSliders();
+      }
+
+      function renderSliders() {
+        const container = document.getElementById("sliderContainer");
+        container.innerHTML = "";
+
+        slidersPerPage =
+          Math.floor(window.innerWidth / sliderWidthIncludingMargin - 1) *
+          Math.floor(
+            (window.innerHeight - footerHeight - menuHeight) /
+              sliderHeightIncludingMargin
+          );
+        totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
+
+        let start = (currentPage - 1) * slidersPerPage;
+        let end = Math.min(start + slidersPerPage, totalSliders);
+        let slidersInCurrentRow = 0;
+
+        for (let i = start; i < end; i++) {
+          let sliderWrapper = document.createElement("div");
+          sliderWrapper.classList.add("slider-wrapper");
+
+          let nameLabel = document.createElement("div");
+          nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
+          sliderWrapper.appendChild(nameLabel);
+
+          let valueDisplay = document.createElement("div");
+          valueDisplay.textContent = sliderValues[i];
+          sliderWrapper.appendChild(valueDisplay);
+
+          let slider = document.createElement("div");
+          sliderWrapper.appendChild(slider);
+          container.appendChild(sliderWrapper);
+
+          noUiSlider.create(slider, {
+            start: sliderValues[i],
+            orientation: "vertical",
+            direction: "rtl",
+            range: {
+              min: 0,
+              max: 255,
+            },
+            connect: [true, false], // Conecta el rango inferior a la manija del deslizador
+            // ... cualquier otra configuración ...
+          });
+          slider.noUiSlider.on("update", function (values, handle) {
+            let value = Math.trunc(values[handle]);
+            if (!blackout) {
+              valueDisplay.textContent = value;
+              sliderValues[i] = value;
+            }
+          });
+
+          slider.noUiSlider.on("start", function () {
+            valueDisplay.style.color = "red";
+          });
+
+          slider.noUiSlider.on("end", function () {
+            valueDisplay.style.color = "black";
+            const jsonString = JSON.stringify(sliderValues);
+            document.cookie = `actualState=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+          });
+
+          // Increment the counter for sliders in the current row
+          slidersInCurrentRow++;
+
+          // Insert a "row break" after every full row except for the last element
+          if (
+            slidersInCurrentRow === Math.floor(window.innerWidth / 70) - 1 &&
+            i < end - 1
+          ) {
+            let rowBreak = document.createElement("div");
+            rowBreak.style.width = "100%";
+            container.appendChild(rowBreak);
+            // Reset the counter for the next row
+            slidersInCurrentRow = 0;
+          }
+        }
+
+        updatePaginationInfo();
+      }
+
+      function changePage(direction) {
+        currentPage += direction;
+        currentPage = Math.max(1, Math.min(currentPage, totalNumberOfPages));
+        renderSliders();
+      }
+
+      function updatePaginationInfo() {
+        document.getElementById(
+          "pageInfo"
+        ).textContent = `${currentPage}-${totalNumberOfPages}`;
+        document.getElementById("prevBtn").disabled = currentPage <= 1;
+        document.getElementById("nextBtn").disabled =
+          currentPage >= totalNumberOfPages;
+      }
+
+      // Buttons and Keyboard controls -------------------------------------
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+          } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
+      }
+
+      function toggleBlackout() {
+        blackout = !blackout;
+        if (blackout) {
+          blackoutTemp = [...sliderValues];
+          sliderValues = new Array(totalSliders).fill(0);
+        } else {
+          sliderValues = [...blackoutTemp];
+        }
+        renderSliders();
+      }
+
+      function toggleNavbarHide() {
+        var navbar = document.getElementById("navbar");
+        if (navbar.hasAttribute("hidden")) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
+        renderSliders();
+      }
+
+      window.onload = updateLayout;
+      window.onresize = updateLayout;
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+          changePage(-1);
+        } else if (event.key === "ArrowRight") {
+          changePage(1);
+        }
+
+        if (event.key === "f" || event.key === "F") {
+          toggleFullscreen();
+        }
+
+        if (event.key === "b" || event.key === "B") {
+          toggleBlackout();
+        }
+
+        if (event.key === "m" || event.key === "M") {
+          toggleNavbarHide();
+        }
+      });
+
+      // Helper Fuctions ------------------------------------------------------
+      function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(";");
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) == " ") c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) == 0)
+            return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
+
+      function doesCookieExist(name) {
+        // Create the cookie name string with equal sign
+        const nameEQ = name + "=";
+        // Split document.cookie on semicolons into an array of all the cookies
+        const ca = document.cookie.split(";");
+        // Loop through the array elements
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          // Remove leading whitespace from the cookie string
+          while (c.charAt(0) == " ") c = c.substring(1, c.length);
+          // Check if this cookie string contains the name we're looking for
+          if (c.indexOf(nameEQ) == 0) return true;
+        }
+        return false;
+      }
+    </script>
+  </body>
+</html>

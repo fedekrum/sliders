@@ -1,0 +1,119 @@
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: "Courier New", Courier, monospace; /* Apply monospace font */
+  overscroll-behavior: none; /* Disable pull-to-refresh and other overscroll effects */
+  user-select: none; /* Disable text selection */
+  -webkit-user-select: none; /* iOS Safari */
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-tap-highlight-color: transparent; /* iOS Safari tap highlight color */
+}
+
+.slider-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0px;
+  padding: 0px;
+  touch-action: none; /* Disable all touch actions on sliders */
+  margin-bottom: 30px; /* Adjusted for footer */
+}
+
+.slider-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px;
+}
+
+.slider-wrapper > div {
+  font-weight: bold; /* Make text bold */
+}
+
+.noUi-vertical {
+  height: 200px;
+  margin-top: 12px;
+}
+
+.pagination-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30px; /* Footer height */
+  background-color: #f0f0f0; /* Footer background color */
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination button {
+  margin: 0 10px;
+  touch-action: manipulation; /* Allow single-finger gestures */
+}
+
+/* Estilo para la barra de progreso del deslizador */
+.noUi-connect {
+  background-color: gray; /* Color gris para el rango seleccionado */
+}
+
+/* Estilo para el fondo de la barra del deslizador, si se requiere */
+.noUi-base {
+  background-color: #f1f1f1; /* Color de fondo más claro para el rango no seleccionado */
+}
+
+nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  height: 30px;
+  line-height: 30px;
+  display: flex; /* Make the ul a flex container */
+  justify-content: start; /* Align items to the start */
+}
+
+nav li {
+  float: left; /* If you're using Flexbox, you might not need float */
+}
+
+nav .text-right {
+  margin-left: auto; /* This pushes the item to the far right */
+  color: white;
+}
+
+nav a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+nav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.disabled-slider .noUi-handle {
+  background: #aaa; /* Gray out the handle */
+}
+
+.disabled-slider .noUi-connect {
+  background: #ccc; /* Gray out the connecting bar */
+}
+
+.disabled-slider {
+  pointer-events: none; /* Make the slider non-interactive */
+  opacity: 0.5; /* Optional: make the whole slider look faded */
+}
