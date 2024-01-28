@@ -101,7 +101,7 @@ nav a {
 }
 
 nav a:hover {
-  background-color: #ddd;
+  background-color: #b0b0b0;
   color: black;
 }
 
@@ -116,4 +116,9 @@ nav a:hover {
 .disabled-slider {
   pointer-events: none; /* Make the slider non-interactive */
   opacity: 0.5; /* Optional: make the whole slider look faded */
+}
+
+.active-menu-item {
+  background-color: #ddd;
+  color: black;
 }

@@ -10,35 +10,82 @@
   <body>
     <nav id="navbar" class="navbar" hidden>
       <ul>
-        <li><a href="#setup">Setup</a></li>
-        <li><a href="#file">File</a></li>
-        <li><a href="#mode">Mode</a></li>
-        <li><a href="#sliders">Sliders</a></li>
-        <li><a href="#scenes">Scenes</a></li>
+        <li>
+          <a
+            id="console-menu-item"
+            href="#console"
+            class="menu-item active-menu-item"
+            onclick="event.preventDefault(); showPageById('console');"
+            >Console</a
+          >
+        </li>
+        <li>
+          <a
+            id="file-menu-item"
+            href="#file"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('file');"
+            >File</a
+          >
+        </li>
+        <li>
+          <a
+            id="mode-menu-item"
+            href="#mode"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('mode');"
+            >Mode</a
+          >
+        </li>
+        <li>
+          <a
+            id="sliders-menu-item"
+            href="#sliders"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('sliders');"
+            >Sliders</a
+          >
+        </li>
+        <li>
+          <a
+            id="scenes-menu-item"
+            href="#scenes"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('scenes');"
+            >Scenes</a
+          >
+        </li>
         <li class="text-right"><span id="viewport"></span>&nbsp;</li>
       </ul>
     </nav>
-    <div id="sliderContainer" class="slider-container"></div>
-    <footer class="pagination-footer">
-      <div class="pagination">
-        <button id="prevBtn" onclick="changePage(-1)">&nbsp;&lt;&nbsp;</button>
-        <span id="pageInfo"></span>
-        <button id="nextBtn" onclick="changePage(1)">&nbsp;&gt;&nbsp;</button>
-        <button id="fullscreenBtn" onclick="toggleFullscreen()">
-          Fullscreen
-        </button>
-        <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
-        <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
-        <button id="downloadBtn" onclick="saveCookiesToJson()">
-          Save in Downloads
-        </button>
-        <button id="uploadBtn" onclick="loadCookiesFromJson()">
-          Load from File
-        </button>
-        <span id="echo"></span>
-      </div>
-    </footer>
-
+    <div id="console" class="page">
+      <div id="sliderContainer" class="slider-container"></div>
+      <footer class="pagination-footer">
+        <div class="pagination">
+          <button id="prevBtn" onclick="changePage(-1)">
+            &nbsp;&lt;&nbsp;
+          </button>
+          <span id="pageInfo"></span>
+          <button id="nextBtn" onclick="changePage(1)">&nbsp;&gt;&nbsp;</button>
+          <button id="fullscreenBtn" onclick="toggleFullscreen()">
+            Fullscreen
+          </button>
+          <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
+          <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+          <button id="downloadBtn" onclick="saveCookiesToJson()">
+            Save in Downloads
+          </button>
+          <button id="uploadBtn" onclick="loadCookiesFromJson()">
+            Load from File
+          </button>
+          <span id="echo"></span>
+        </div>
+      </footer>
+    </div>
+    <div id="file" class="page" hidden>File</div>
+    <div id="mode" class="page" hidden>Mode</div>
+    <div id="sliders" class="page" hidden>Sliders</div>
+    <div id="scenes" class="page" hidden>Scenes</div>
     <script src="nouislider.min.js"></script>
     <script>
       let currentPage = 1;
@@ -403,6 +450,34 @@
       function handleFileSelect(event) {
         const file = event.target.files[0];
         uploadCookiesFromFile(file);
+      }
+
+      function showPageById(pageId) {
+        // Hide all elements with the class 'page' using the 'hidden' attribute
+        const pages = document.querySelectorAll(".page");
+        pages.forEach((page) => {
+          page.hidden = true;
+        });
+
+        // Remove the 'active-menu-item' class from all menu items
+        document
+          .querySelectorAll(".menu-item")
+          .forEach((item) => item.classList.remove("active-menu-item"));
+
+        // Unhide the element with the specified ID, but only if it has the 'page' class
+        const pageToShow = document.getElementById(pageId);
+        if (pageToShow && pageToShow.classList.contains("page")) {
+          pageToShow.hidden = false; // Use the 'hidden' attribute to show the element
+
+          // Select the element with both class1 and class2
+          const element = document.querySelector(
+            `.menu-item[href="#${pageId}"]`
+          );
+          // Add class3 to the element
+          element.classList.add("active-menu-item");
+        } else {
+          console.warn(`No element found with ID '${pageId}' and class 'page'`);
+        }
       }
     </script>
   </body>
