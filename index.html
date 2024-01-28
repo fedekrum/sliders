@@ -15,15 +15,15 @@
         <li><a href="#mode">Mode</a></li>
         <li><a href="#sliders">Sliders</a></li>
         <li><a href="#scenes">Scenes</a></li>
-        <li class="text-right"><span id="viewport"></span>&nbsp</li>
+        <li class="text-right"><span id="viewport"></span>&nbsp;</li>
       </ul>
     </nav>
     <div id="sliderContainer" class="slider-container"></div>
     <footer class="pagination-footer">
       <div class="pagination">
-        <button id="prevBtn" onclick="changePage(-1)">&nbsp&lt&nbsp</button>
+        <button id="prevBtn" onclick="changePage(-1)">&nbsp;&lt;&nbsp;</button>
         <span id="pageInfo"></span>
-        <button id="nextBtn" onclick="changePage(1)">&nbsp&gt&nbsp</button>
+        <button id="nextBtn" onclick="changePage(1)">&nbsp;&gt;&nbsp;</button>
         <button id="fullscreenBtn" onclick="toggleFullscreen()">
           Fullscreen
         </button>
@@ -35,6 +35,7 @@
         <button id="uploadBtn" onclick="loadCookiesFromJson()">
           Load from File
         </button>
+        <span id="echo"></span>
       </div>
     </footer>
 
@@ -42,9 +43,10 @@
     <script>
       let currentPage = 1;
       let totalSliders = 512;
+      let selectedSliders = [];
       let slidersPerPage;
       let totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
-      let sliderValues;
+      let sliderValues = [];
       let blackout = false;
       let blackoutTemp = [];
 
@@ -52,6 +54,7 @@
       let sliderHeightIncludingMargin = 290;
       let footerHeight = 30;
       let menuHeight = 30;
+      let xxx = 1;
 
       // -------------------------------- Get , Set and refresh Cookies ---------------------------------
 
@@ -132,63 +135,67 @@
         let slidersInCurrentRow = 0;
 
         for (let i = start; i < end; i++) {
-          let sliderWrapper = document.createElement("div");
-          sliderWrapper.classList.add("slider-wrapper");
+          if (i < 10 || i > 200) {
+            let sliderWrapper = document.createElement("div");
+            sliderWrapper.classList.add("slider-wrapper");
 
-          let nameLabel = document.createElement("div");
-          nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
-          sliderWrapper.appendChild(nameLabel);
+            let nameLabel = document.createElement("div");
+            nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
+            sliderWrapper.appendChild(nameLabel);
 
-          let valueDisplay = document.createElement("div");
-          valueDisplay.textContent = sliderValues[i];
-          sliderWrapper.appendChild(valueDisplay);
+            let valueDisplay = document.createElement("div");
+            valueDisplay.textContent = sliderValues[i];
+            sliderWrapper.appendChild(valueDisplay);
 
-          let slider = document.createElement("div");
-          sliderWrapper.appendChild(slider);
-          container.appendChild(sliderWrapper);
+            let slider = document.createElement("div");
+            sliderWrapper.appendChild(slider);
+            container.appendChild(sliderWrapper);
 
-          noUiSlider.create(slider, {
-            start: sliderValues[i],
-            orientation: "vertical",
-            direction: "rtl",
-            range: {
-              min: 0,
-              max: 255,
-            },
-            connect: [true, false], // Conecta el rango inferior a la manija del deslizador
-            // ... cualquier otra configuración ...
-          });
-          slider.noUiSlider.on("update", function (values, handle) {
-            let value = Math.trunc(values[handle]);
-            if (!blackout) {
-              valueDisplay.textContent = value;
-              sliderValues[i] = value;
+            noUiSlider.create(slider, {
+              start: sliderValues[i],
+              orientation: "vertical",
+              direction: "rtl",
+              range: {
+                min: 0,
+                max: 255,
+              },
+              connect: [true, false], // Conecta el rango inferior a la manija del deslizador
+              // ... cualquier otra configuración ...
+            });
+            slider.noUiSlider.on("update", function (values, handle) {
+              let value = Math.trunc(values[handle]);
+              if (!blackout) {
+                valueDisplay.textContent = value;
+                sliderValues[i] = value;
+              }
+              document.getElementById("echo").textContent = i + " " + xxx++;
+            });
+
+            slider.noUiSlider.on("start", function () {
+              valueDisplay.style.color = "red";
+            });
+
+            slider.noUiSlider.on("end", function () {
+              valueDisplay.style.color = "black";
+              setCookie("actualValues", JSON.stringify(sliderValues), 400);
+            });
+
+            // Increment the counter for sliders in the current row
+            slidersInCurrentRow++;
+
+            // Insert a "row break" after every full row except for the last element
+            if (
+              slidersInCurrentRow ===
+                Math.floor(window.innerWidth / sliderWidthIncludingMargin) -
+                  1 &&
+              i < end - 1
+            ) {
+              let rowBreak = document.createElement("div");
+              rowBreak.style.width = "100%";
+              container.appendChild(rowBreak);
+              // Reset the counter for the next row
+              slidersInCurrentRow = 0;
             }
-          });
-
-          slider.noUiSlider.on("start", function () {
-            valueDisplay.style.color = "red";
-          });
-
-          slider.noUiSlider.on("end", function () {
-            valueDisplay.style.color = "black";
-            setCookie("actualValues", JSON.stringify(sliderValues), 400);
-          });
-
-          // Increment the counter for sliders in the current row
-          slidersInCurrentRow++;
-
-          // Insert a "row break" after every full row except for the last element
-          if (
-            slidersInCurrentRow ===
-              Math.floor(window.innerWidth / sliderWidthIncludingMargin) - 1 &&
-            i < end - 1
-          ) {
-            let rowBreak = document.createElement("div");
-            rowBreak.style.width = "100%";
-            container.appendChild(rowBreak);
-            // Reset the counter for the next row
-            slidersInCurrentRow = 0;
           }
         }
 
