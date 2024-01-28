@@ -6,17 +6,18 @@
     <title>Responsive Sliders</title>
     <link href="style.css" rel="stylesheet" />
     <link href="nouislider.min.css" rel="stylesheet" />
-    <nav id="navbar" class="navbar">
+  </head>
+  <body>
+    <nav id="navbar" class="navbar" hidden>
       <ul>
-        <li><a href="#home">Home</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#about">About</a></li>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="#file">File</a></li>
         <li><a href="#mode">Mode</a></li>
+        <li><a href="#sliders">Sliders</a></li>
+        <li><a href="#scenes">Scenes</a></li>
         <li class="text-right"><span id="viewport"></span>&nbsp</li>
       </ul>
     </nav>
-  </head>
-  <body>
     <div id="sliderContainer" class="slider-container"></div>
     <footer class="pagination-footer">
       <div class="pagination">
@@ -28,6 +29,12 @@
         </button>
         <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
         <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+        <button id="downloadBtn" onclick="saveCookiesToJson()">
+          Save in Downloads
+        </button>
+        <button id="uploadBtn" onclick="loadCookiesFromJson()">
+          Load from File
+        </button>
       </div>
     </footer>
 
@@ -38,27 +45,43 @@
       let slidersPerPage;
       let totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
       let sliderValues;
-      if (doesCookieExist("actualState")) {
-        let jsonString = getCookie("actualState");
+      let blackout = false;
+      let blackoutTemp = [];
+
+      let sliderWidthIncludingMargin = 70;
+      let sliderHeightIncludingMargin = 290;
+      let footerHeight = 30;
+      let menuHeight = 30;
+
+      // -------------------------------- Get , Set and refresh Cookies ---------------------------------
+
+      // actualValues
+      if (doesCookieExist("actualValues")) {
+        let jsonString = getCookie("actualValues");
         sliderValues = jsonString ? JSON.parse(jsonString) : [];
       } else {
         sliderValues = new Array(totalSliders).fill(0);
       }
+      setCookie("actualValues", JSON.stringify(sliderValues), 400);
 
-      let blackout = false;
-      let blackoutTemp = [];
+      // selectedSliders
+      if (doesCookieExist("selectedSliders")) {
+        let jsonString = getCookie("selectedSliders");
+        selectedSliders = jsonString ? JSON.parse(jsonString) : [];
+      } else {
+        selectedSliders = new Array(totalSliders).fill(0);
+      }
+      setCookie("selectedSliders", JSON.stringify(selectedSliders), 400);
 
-      let sliderWidthIncludingMargin;
-      let sliderHeightIncludingMargin;
-      let footerHeight;
-      let menuHeight;
+      // menuEnable
+      if (doesCookieExist("menuEnable")) {
+        menuEnable = JSON.parse(getCookie("menuEnable"));
+      } else {
+        menuEnable = true;
+      }
+      setCookie("menuEnable", JSON.stringify(menuEnable), 400);
 
       function updateLayout() {
-        sliderWidthIncludingMargin = 70; // Asumiendo que cada slider tiene un ancho total de 70px incluyendo márgenes
-        sliderHeightIncludingMargin = 290; // Asumiendo que cada slider tiene un alto total de 290px incluyendo márgenes
-        menuHeight = 30; // Altura del menu
-        footerHeight = 30; // Altura del footer
-
         // Calcular el número de deslizadores por fila
         const slidersPerRow = Math.floor(
           window.innerWidth / sliderWidthIncludingMargin
@@ -66,7 +89,7 @@
 
         // Calcular el número de filas por página
         const rowsPerPage = Math.floor(
-          (window.innerHeight - footerHeight - menuHeight) /
+          (window.innerHeight - footerHeight - (menuEnable ? menuHeight : 0)) /
             sliderHeightIncludingMargin
         );
 
@@ -84,17 +107,22 @@
           "viewport"
         ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
 
-        renderSliders();
-      }
+        var navbar = document.getElementById("navbar");
+        if (menuEnable) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
 
-      function renderSliders() {
         const container = document.getElementById("sliderContainer");
         container.innerHTML = "";
 
         slidersPerPage =
           Math.floor(window.innerWidth / sliderWidthIncludingMargin - 1) *
           Math.floor(
-            (window.innerHeight - footerHeight - menuHeight) /
+            (window.innerHeight -
+              footerHeight -
+              (menuEnable ? menuHeight : 0)) /
               sliderHeightIncludingMargin
           );
         totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
@@ -144,8 +172,7 @@
 
           slider.noUiSlider.on("end", function () {
             valueDisplay.style.color = "black";
-            const jsonString = JSON.stringify(sliderValues);
-            document.cookie = `actualState=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+            setCookie("actualValues", JSON.stringify(sliderValues), 400);
           });
 
           // Increment the counter for sliders in the current row
@@ -153,7 +180,8 @@
 
           // Insert a "row break" after every full row except for the last element
           if (
-            slidersInCurrentRow === Math.floor(window.innerWidth / 70) - 1 &&
+            slidersInCurrentRow ===
+              Math.floor(window.innerWidth / sliderWidthIncludingMargin) - 1 &&
             i < end - 1
           ) {
             let rowBreak = document.createElement("div");
@@ -170,7 +198,7 @@
       function changePage(direction) {
         currentPage += direction;
         currentPage = Math.max(1, Math.min(currentPage, totalNumberOfPages));
-        renderSliders();
+        updateLayout();
       }
 
       function updatePaginationInfo() {
@@ -182,7 +210,7 @@
           currentPage >= totalNumberOfPages;
       }
 
-      // Buttons and Keyboard controls -------------------------------------
+      // ----------------------------------Buttons and Keyboard controls -------------------------------------
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
           if (document.documentElement.requestFullscreen) {
@@ -215,17 +243,13 @@
         } else {
           sliderValues = [...blackoutTemp];
         }
-        renderSliders();
+        updateLayout();
       }
 
       function toggleNavbarHide() {
-        var navbar = document.getElementById("navbar");
-        if (navbar.hasAttribute("hidden")) {
-          navbar.removeAttribute("hidden");
-        } else {
-          navbar.setAttribute("hidden", "true");
-        }
-        renderSliders();
+        menuEnable = !menuEnable;
+        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
+        updateLayout();
       }
 
       window.onload = updateLayout;
@@ -264,6 +288,18 @@
         return null;
       }
 
+      function setCookie(name, value, days = 400) {
+        let expires = "";
+        if (days) {
+          const date = new Date();
+          date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+          expires = "; expires=" + date.toUTCString();
+        }
+        const cookieString = name + "=" + (value || "") + expires + "; path=/";
+        console.log("Setting cookie:", cookieString); // Log the cookie string
+        document.cookie = cookieString;
+      }
+
       function doesCookieExist(name) {
         // Create the cookie name string with equal sign
         const nameEQ = name + "=";
@@ -278,6 +314,88 @@
           if (c.indexOf(nameEQ) == 0) return true;
         }
         return false;
+      }
+
+      // Download cookies to a file
+      function saveCookiesToJson(filename = "ConsoleConfig.json") {
+        const cookies = document.cookie.split(";");
+        const cookieJson = {};
+
+        cookies.forEach((cookie) => {
+          const [name, value] = cookie.split("=").map((c) => c.trim());
+          if (name && value) {
+            cookieJson[name] = decodeURIComponent(value);
+          }
+        });
+
+        const jsonStr = JSON.stringify(cookieJson);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      // Upload cookies from a file
+      function loadCookiesFromJson() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) {
+            console.error("No file selected.");
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const contents = event.target.result;
+            try {
+              const cookies = JSON.parse(contents);
+              Object.keys(cookies).forEach((name) => {
+                console.log(`Setting cookie: ${name} = ${cookies[name]}`);
+                setCookie(name, cookies[name]);
+              });
+              console.log("All cookies set.");
+
+              // Call updateLayout here, after all cookies are set
+              let jsonString = getCookie("actualValues");
+              sliderValues = jsonString ? JSON.parse(jsonString) : [];
+              jsonString = getCookie("menuEnable");
+              menuEnable = jsonString ? JSON.parse(jsonString) : [];
+              updateLayout();
+            } catch (error) {
+              console.error("Error parsing JSON:", error);
+            }
+          };
+
+          reader.onerror = (error) =>
+            console.error("Error reading file:", error);
+          reader.readAsText(file);
+        };
+
+        input.click();
+        let jsonString = getCookie("actualValues");
+        sliderValues = jsonString ? JSON.parse(jsonString) : [];
+        jsonString = getCookie("menuEnable");
+        menuEnable = jsonString ? JSON.parse(jsonString) : [];
+      }
+
+      function openFileInput() {
+        const fileInput = document.getElementById("fileInput");
+        fileInput.click();
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        uploadCookiesFromFile(file);
       }
     </script>
   </body>
