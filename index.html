@@ -133,6 +133,7 @@
       }
       setCookie("menuEnable", JSON.stringify(menuEnable), 400);
 
+      // --------------------------------- Update layout ---------------------------------
       function updateLayout() {
         // Calcular el número de deslizadores por fila
         const slidersPerRow = Math.floor(
@@ -184,7 +185,7 @@
         let slidersInCurrentRow = 0;
 
         for (let i = start; i < end; i++) {
-          if (i < 10 || i > 200) {
+          if (i < 10 || i > 12) {
             let sliderWrapper = document.createElement("div");
             sliderWrapper.classList.add("slider-wrapper");
 
