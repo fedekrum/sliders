@@ -6,18 +6,17 @@
     <title>Responsive Sliders</title>
     <link href="style.css" rel="stylesheet" />
     <link href="nouislider.min.css" rel="stylesheet" />
-  </head>
-  <body>
-    <nav id="navbar" class="navbar" hidden>
+    <nav id="navbar" class="navbar">
       <ul>
-        <li><a href="#setup">Setup</a></li>
-        <li><a href="#file">File</a></li>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#about">About</a></li>
         <li><a href="#mode">Mode</a></li>
-        <li><a href="#sliders">Sliders</a></li>
-        <li><a href="#scenes">Scenes</a></li>
         <li class="text-right"><span id="viewport"></span>&nbsp</li>
       </ul>
     </nav>
+  </head>
+  <body>
     <div id="sliderContainer" class="slider-container"></div>
     <footer class="pagination-footer">
       <div class="pagination">
@@ -29,64 +28,37 @@
         </button>
         <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
         <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
-        <button id="downloadBtn" onclick="saveCookiesToJson()">
-          Save in Downloads
-        </button>
-        <button id="uploadBtn" onclick="loadCookiesFromJson()">
-          Load from File
-        </button>
       </div>
     </footer>
 
     <script src="nouislider.min.js"></script>
     <script>
-      // -------------------------------- Global  Variables ---------------------------------
-      let sliderWidthIncludingMargin = 70;
-      let sliderHeightIncludingMargin = 290;
-      let footerHeight = 30;
-      let menuHeight = 30;
-      let totalSliders = 512; // habra que sacarlo de la cantidad disponibles en el ESPixel
-      let blackout = false;
-      let blackoutTemp = [];
-      let selectedSliders = [];
-
       let currentPage = 1;
+      let totalSliders = 512;
       let slidersPerPage;
-      let totalNumberOfPages;
-
+      let totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
       let sliderValues;
-      let menuEnable;
-
-      // -------------------------------- Get , Set and refresh Cookies ---------------------------------
-
-      // actualValues
-      if (doesCookieExist("actualValues")) {
-        let jsonString = getCookie("actualValues");
+      if (doesCookieExist("actualState")) {
+        let jsonString = getCookie("actualState");
         sliderValues = jsonString ? JSON.parse(jsonString) : [];
       } else {
         sliderValues = new Array(totalSliders).fill(0);
       }
-      setCookie("actualValues", JSON.stringify(sliderValues), 400);
 
-      // selectedSliders
-      if (doesCookieExist("selectedSliders")) {
-        let jsonString = getCookie("selectedSliders");
-        selectedSliders = jsonString ? JSON.parse(jsonString) : [];
-      } else {
-        selectedSliders = new Array(totalSliders).fill(0);
-      }
-      setCookie("selectedSliders", JSON.stringify(selectedSliders), 400);
+      let blackout = false;
+      let blackoutTemp = [];
 
-      // menuEnable
-      if (doesCookieExist("menuEnable")) {
-        menuEnable = JSON.parse(getCookie("menuEnable"));
-      } else {
-        menuEnable = true;
-      }
-      setCookie("menuEnable", JSON.stringify(menuEnable), 400);
+      let sliderWidthIncludingMargin;
+      let sliderHeightIncludingMargin;
+      let footerHeight;
+      let menuHeight;
 
       function updateLayout() {
-        // -------------------------------- Calculations ---------------------------------
+        sliderWidthIncludingMargin = 70; // Asumiendo que cada slider tiene un ancho total de 70px incluyendo márgenes
+        sliderHeightIncludingMargin = 290; // Asumiendo que cada slider tiene un alto total de 290px incluyendo márgenes
+        menuHeight = 30; // Altura del menu
+        footerHeight = 30; // Altura del footer
+
         // Calcular el número de deslizadores por fila
         const slidersPerRow = Math.floor(
           window.innerWidth / sliderWidthIncludingMargin
@@ -94,19 +66,35 @@
 
         // Calcular el número de filas por página
         const rowsPerPage = Math.floor(
-          (window.innerHeight - footerHeight - (menuEnable ? menuHeight : 0)) /
+          (window.innerHeight - footerHeight - menuHeight) /
             sliderHeightIncludingMargin
         );
 
+        // Calcular el total de deslizadores por página (redondeando hacia arriba para llenar la fila)
+        slidersPerPage = slidersPerRow * rowsPerPage;
+
+        // Asegurarse de que hay al menos un deslizador por página
+        slidersPerPage = Math.max(slidersPerPage, 1);
+
+        // Calcular el número total de páginas
+        totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
+
+        // Actualizar el texto del viewport en la página
+        document.getElementById(
+          "viewport"
+        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
+        renderSliders();
+      }
+
+      function renderSliders() {
         const container = document.getElementById("sliderContainer");
         container.innerHTML = "";
 
         slidersPerPage =
           Math.floor(window.innerWidth / sliderWidthIncludingMargin - 1) *
           Math.floor(
-            (window.innerHeight -
-              footerHeight -
-              (menuEnable ? menuHeight : 0)) /
+            (window.innerHeight - footerHeight - menuHeight) /
               sliderHeightIncludingMargin
           );
         totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
@@ -114,21 +102,6 @@
         let start = (currentPage - 1) * slidersPerPage;
         let end = Math.min(start + slidersPerPage, totalSliders);
         let slidersInCurrentRow = 0;
-
-        // -------------------------------- View ---------------------------------
-
-        // Actualizael navbar
-        var navbar = document.getElementById("navbar");
-        if (menuEnable) {
-          navbar.removeAttribute("hidden");
-        } else {
-          navbar.setAttribute("hidden", "true");
-        }
-
-        // Actualizar el texto del viewport en la página
-        document.getElementById(
-          "viewport"
-        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
 
         for (let i = start; i < end; i++) {
           let sliderWrapper = document.createElement("div");
@@ -157,7 +130,6 @@
             connect: [true, false], // Conecta el rango inferior a la manija del deslizador
             // ... cualquier otra configuración ...
           });
-
           slider.noUiSlider.on("update", function (values, handle) {
             let value = Math.trunc(values[handle]);
             if (!blackout) {
@@ -173,7 +145,7 @@
           slider.noUiSlider.on("end", function () {
             valueDisplay.style.color = "black";
             const jsonString = JSON.stringify(sliderValues);
-            document.cookie = `actualValues=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+            document.cookie = `actualState=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
           });
 
           // Increment the counter for sliders in the current row
@@ -181,8 +153,7 @@
 
           // Insert a "row break" after every full row except for the last element
           if (
-            slidersInCurrentRow ===
-              Math.floor(window.innerWidth / sliderWidthIncludingMargin) - 1 &&
+            slidersInCurrentRow === Math.floor(window.innerWidth / 70) - 1 &&
             i < end - 1
           ) {
             let rowBreak = document.createElement("div");
@@ -199,7 +170,7 @@
       function changePage(direction) {
         currentPage += direction;
         currentPage = Math.max(1, Math.min(currentPage, totalNumberOfPages));
-        updateLayout();
+        renderSliders();
       }
 
       function updatePaginationInfo() {
@@ -211,7 +182,7 @@
           currentPage >= totalNumberOfPages;
       }
 
-      // ----------------------------------Buttons and Keyboard controls -------------------------------------
+      // Buttons and Keyboard controls -------------------------------------
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
           if (document.documentElement.requestFullscreen) {
@@ -244,26 +215,21 @@
         } else {
           sliderValues = [...blackoutTemp];
         }
-        updateLayout();
+        renderSliders();
       }
 
       function toggleNavbarHide() {
-        menuEnable = !menuEnable;
-        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
-        updateLayout();
-      }
-
-      function toggleNavbarHide() {
-        menuEnable = !menuEnable;
         var navbar = document.getElementById("navbar");
-        if (menuEnable) {
+        if (navbar.hasAttribute("hidden")) {
           navbar.removeAttribute("hidden");
         } else {
           navbar.setAttribute("hidden", "true");
         }
-        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
-        updateLayout();
+        renderSliders();
       }
+
+      window.onload = updateLayout;
+      window.onresize = updateLayout;
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "ArrowLeft") {
@@ -285,9 +251,6 @@
         }
       });
 
-      window.onload = updateLayout();
-      window.onresize = updateLayout();
-
       // Helper Fuctions ------------------------------------------------------
       function getCookie(name) {
         const nameEQ = name + "=";
@@ -299,18 +262,6 @@
             return c.substring(nameEQ.length, c.length);
         }
         return null;
-      }
-
-      function setCookie(name, value, days = 400) {
-        let expires = "";
-        if (days) {
-          const date = new Date();
-          date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-          expires = "; expires=" + date.toUTCString();
-        }
-        const cookieString = name + "=" + (value || "") + expires + "; path=/";
-        console.log("Setting cookie:", cookieString); // Log the cookie string
-        document.cookie = cookieString;
       }
 
       function doesCookieExist(name) {
@@ -327,89 +278,6 @@
           if (c.indexOf(nameEQ) == 0) return true;
         }
         return false;
-      }
-
-      // Download cookies to a file
-      function saveCookiesToJson(filename = "ConsoleConfig.json") {
-        const cookies = document.cookie.split(";");
-        const cookieJson = {};
-
-        cookies.forEach((cookie) => {
-          const [name, value] = cookie.split("=").map((c) => c.trim());
-          if (name && value) {
-            cookieJson[name] = decodeURIComponent(value);
-          }
-        });
-
-        const jsonStr = JSON.stringify(cookieJson);
-        const blob = new Blob([jsonStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-
-      // Upload cookies from a file
-      function loadCookiesFromJson() {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".json";
-
-        input.onchange = (e) => {
-          const file = e.target.files[0];
-          if (!file) {
-            console.error("No file selected.");
-            return;
-          }
-
-          const reader = new FileReader();
-          reader.onload = function (event) {
-            const contents = event.target.result;
-            try {
-              const cookies = JSON.parse(contents);
-              Object.keys(cookies).forEach((name) => {
-                console.log(`Setting cookie: ${name} = ${cookies[name]}`);
-                setCookie(name, cookies[name]);
-              });
-              console.log("All cookies set.");
-
-              // Call updateLayout here, after all cookies are set
-              let jsonString = getCookie("actualValues");
-              sliderValues = jsonString ? JSON.parse(jsonString) : [];
-              jsonString = getCookie("menuEnable");
-              menuEnable = jsonString ? JSON.parse(jsonString) : [];
-              updateLayout();
-            } catch (error) {
-              console.error("Error parsing JSON:", error);
-            }
-          };
-
-          reader.onerror = (error) =>
-            console.error("Error reading file:", error);
-
-          reader.readAsText(file);
-        };
-
-        input.click();
-        let jsonString = getCookie("actualValues");
-        sliderValues = jsonString ? JSON.parse(jsonString) : [];
-        jsonString = getCookie("menuEnable");
-        menuEnable = jsonString ? JSON.parse(jsonString) : [];
-      }
-
-      function openFileInput() {
-        const fileInput = document.getElementById("fileInput");
-        fileInput.click();
-      }
-
-      function handleFileSelect(event) {
-        const file = event.target.files[0];
-        uploadCookiesFromFile(file);
       }
     </script>
   </body>

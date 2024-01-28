@@ -117,3 +117,17 @@ nav a:hover {
   pointer-events: none; /* Make the slider non-interactive */
   opacity: 0.5; /* Optional: make the whole slider look faded */
 }
+
+/* Style for the button */
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+/* Style for the file input (hidden by default) */
+input[type="file"] {
+  display: none;
+}
