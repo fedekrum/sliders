@@ -72,17 +72,19 @@
           </button>
           <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
           <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
-          <button id="downloadBtn" onclick="saveCookiesToJson()">
-            Save in Downloads
-          </button>
-          <button id="uploadBtn" onclick="loadCookiesFromJson()">
-            Load from File
-          </button>
+
           <span id="echo"></span>
         </div>
       </footer>
     </div>
-    <div id="file" class="page" hidden>File</div>
+    <div id="file" class="page" hidden>
+      <button id="downloadBtn" onclick="saveCookiesToJson()">
+        Save in Downloads
+      </button>
+      <button id="uploadBtn" onclick="loadCookiesFromJson()">
+        Load from File
+      </button>
+    </div>
     <div id="mode" class="page" hidden>Mode</div>
     <div id="sliders" class="page" hidden>Sliders</div>
     <div id="scenes" class="page" hidden>Scenes</div>
@@ -469,7 +471,7 @@
         if (pageToShow && pageToShow.classList.contains("page")) {
           pageToShow.hidden = false; // Use the 'hidden' attribute to show the element
 
-          // Select the element with both class1 and class2
+          // Select the element with both classes
           const element = document.querySelector(
             `.menu-item[href="#${pageId}"]`
           );
