@@ -10,100 +10,52 @@
   <body>
     <nav id="navbar" class="navbar" hidden>
       <ul>
-        <li>
-          <a
-            id="console-menu-item"
-            href="#console"
-            class="menu-item active-menu-item"
-            onclick="event.preventDefault(); showPageById('console');"
-            >Console</a
-          >
-        </li>
-        <li>
-          <a
-            id="file-menu-item"
-            href="#file"
-            class="menu-item"
-            onclick="event.preventDefault(); showPageById('file');"
-            >File</a
-          >
-        </li>
-        <li>
-          <a
-            id="mode-menu-item"
-            href="#mode"
-            class="menu-item"
-            onclick="event.preventDefault(); showPageById('mode');"
-            >Mode</a
-          >
-        </li>
-        <li>
-          <a
-            id="sliders-menu-item"
-            href="#sliders"
-            class="menu-item"
-            onclick="event.preventDefault(); showPageById('sliders');"
-            >Sliders</a
-          >
-        </li>
-        <li>
-          <a
-            id="scenes-menu-item"
-            href="#scenes"
-            class="menu-item"
-            onclick="event.preventDefault(); showPageById('scenes');"
-            >Scenes</a
-          >
-        </li>
-        <li class="text-right"><span id="viewport"></span>&nbsp;</li>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="#file">File</a></li>
+        <li><a href="#mode">Mode</a></li>
+        <li><a href="#sliders">Sliders</a></li>
+        <li><a href="#scenes">Scenes</a></li>
+        <li class="text-right"><span id="viewport"></span>&nbsp</li>
       </ul>
     </nav>
-    <div id="console" class="page">
-      <div id="sliderContainer" class="slider-container"></div>
-      <footer class="pagination-footer">
-        <div class="pagination">
-          <button id="prevBtn" onclick="changePage(-1)">
-            &nbsp;&lt;&nbsp;
-          </button>
-          <span id="pageInfo"></span>
-          <button id="nextBtn" onclick="changePage(1)">&nbsp;&gt;&nbsp;</button>
-          <button id="fullscreenBtn" onclick="toggleFullscreen()">
-            Fullscreen
-          </button>
-          <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
-          <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+    <div id="sliderContainer" class="slider-container"></div>
+    <footer class="pagination-footer">
+      <div class="pagination">
+        <button id="prevBtn" onclick="changePage(-1)">&nbsp&lt&nbsp</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" onclick="changePage(1)">&nbsp&gt&nbsp</button>
+        <button id="fullscreenBtn" onclick="toggleFullscreen()">
+          Fullscreen
+        </button>
+        <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
+        <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+        <button id="downloadBtn" onclick="saveCookiesToJson()">
+          Save in Downloads
+        </button>
+        <button id="uploadBtn" onclick="loadCookiesFromJson()">
+          Load from File
+        </button>
+      </div>
+    </footer>
 
-          <span id="echo"></span>
-        </div>
-      </footer>
-    </div>
-    <div id="file" class="page" hidden>
-      <button id="downloadBtn" onclick="saveCookiesToJson()">
-        Save in Downloads
-      </button>
-      <button id="uploadBtn" onclick="loadCookiesFromJson()">
-        Load from File
-      </button>
-    </div>
-    <div id="mode" class="page" hidden>Mode</div>
-    <div id="sliders" class="page" hidden>Sliders</div>
-    <div id="scenes" class="page" hidden>Scenes</div>
     <script src="nouislider.min.js"></script>
     <script>
-      let currentPage = 1;
-      let totalSliders = 512;
-      let selectedSliders = [];
-      let slidersPerPage;
-      let totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
-      let sliderValues = [];
-      let blackout = false;
-      let blackoutTemp = [];
-
+      // -------------------------------- Global  Variables ---------------------------------
       let sliderWidthIncludingMargin = 70;
       let sliderHeightIncludingMargin = 290;
       let footerHeight = 30;
       let menuHeight = 30;
-      let xxx = 1;
+      let totalSliders = 512; // habra que sacarlo de la cantidad disponibles en el ESPixel
+      let blackout = false;
+      let blackoutTemp = [];
+      let selectedSliders = [];
+
+      let currentPage = 1;
+      let slidersPerPage;
+      let totalNumberOfPages;
+
+      let sliderValues;
+      let menuEnable;
 
       // -------------------------------- Get , Set and refresh Cookies ---------------------------------
 
@@ -134,6 +86,7 @@
       setCookie("menuEnable", JSON.stringify(menuEnable), 400);
 
       function updateLayout() {
+        // -------------------------------- Calculations ---------------------------------
         // Calcular el número de deslizadores por fila
         const slidersPerRow = Math.floor(
           window.innerWidth / sliderWidthIncludingMargin
@@ -144,27 +97,6 @@
           (window.innerHeight - footerHeight - (menuEnable ? menuHeight : 0)) /
             sliderHeightIncludingMargin
         );
-
-        // Calcular el total de deslizadores por página (redondeando hacia arriba para llenar la fila)
-        slidersPerPage = slidersPerRow * rowsPerPage;
-
-        // Asegurarse de que hay al menos un deslizador por página
-        slidersPerPage = Math.max(slidersPerPage, 1);
-
-        // Calcular el número total de páginas
-        totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
-
-        // Actualizar el texto del viewport en la página
-        document.getElementById(
-          "viewport"
-        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
-
-        var navbar = document.getElementById("navbar");
-        if (menuEnable) {
-          navbar.removeAttribute("hidden");
-        } else {
-          navbar.setAttribute("hidden", "true");
-        }
 
         const container = document.getElementById("sliderContainer");
         container.innerHTML = "";
@@ -183,68 +115,81 @@
         let end = Math.min(start + slidersPerPage, totalSliders);
         let slidersInCurrentRow = 0;
 
+        // -------------------------------- View ---------------------------------
+
+        // Actualizael navbar
+        var navbar = document.getElementById("navbar");
+        if (menuEnable) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
+
+        // Actualizar el texto del viewport en la página
+        document.getElementById(
+          "viewport"
+        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
         for (let i = start; i < end; i++) {
-          if (i < 10 || i > 200) {
-            let sliderWrapper = document.createElement("div");
-            sliderWrapper.classList.add("slider-wrapper");
+          let sliderWrapper = document.createElement("div");
+          sliderWrapper.classList.add("slider-wrapper");
 
-            let nameLabel = document.createElement("div");
-            nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
-            sliderWrapper.appendChild(nameLabel);
+          let nameLabel = document.createElement("div");
+          nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
+          sliderWrapper.appendChild(nameLabel);
 
-            let valueDisplay = document.createElement("div");
-            valueDisplay.textContent = sliderValues[i];
-            sliderWrapper.appendChild(valueDisplay);
+          let valueDisplay = document.createElement("div");
+          valueDisplay.textContent = sliderValues[i];
+          sliderWrapper.appendChild(valueDisplay);
 
-            let slider = document.createElement("div");
-            sliderWrapper.appendChild(slider);
-            container.appendChild(sliderWrapper);
+          let slider = document.createElement("div");
+          sliderWrapper.appendChild(slider);
+          container.appendChild(sliderWrapper);
 
-            noUiSlider.create(slider, {
-              start: sliderValues[i],
-              orientation: "vertical",
-              direction: "rtl",
-              range: {
-                min: 0,
-                max: 255,
-              },
-              connect: [true, false], // Conecta el rango inferior a la manija del deslizador
-              // ... cualquier otra configuración ...
-            });
-            slider.noUiSlider.on("update", function (values, handle) {
-              let value = Math.trunc(values[handle]);
-              if (!blackout) {
-                valueDisplay.textContent = value;
-                sliderValues[i] = value;
-              }
-              document.getElementById("echo").textContent = i + " " + xxx++;
-            });
+          noUiSlider.create(slider, {
+            start: sliderValues[i],
+            orientation: "vertical",
+            direction: "rtl",
+            range: {
+              min: 0,
+              max: 255,
+            },
+            connect: [true, false], // Conecta el rango inferior a la manija del deslizador
+            // ... cualquier otra configuración ...
+          });
 
-            slider.noUiSlider.on("start", function () {
-              valueDisplay.style.color = "red";
-            });
-
-            slider.noUiSlider.on("end", function () {
-              valueDisplay.style.color = "black";
-              setCookie("actualValues", JSON.stringify(sliderValues), 400);
-            });
-
-            // Increment the counter for sliders in the current row
-            slidersInCurrentRow++;
-
-            // Insert a "row break" after every full row except for the last element
-            if (
-              slidersInCurrentRow ===
-                Math.floor(window.innerWidth / sliderWidthIncludingMargin) -
-                  1 &&
-              i < end - 1
-            ) {
-              let rowBreak = document.createElement("div");
-              rowBreak.style.width = "100%";
-              container.appendChild(rowBreak);
-              // Reset the counter for the next row
-              slidersInCurrentRow = 0;
+          slider.noUiSlider.on("update", function (values, handle) {
+            let value = Math.trunc(values[handle]);
+            if (!blackout) {
+              valueDisplay.textContent = value;
+              sliderValues[i] = value;
             }
+          });
+
+          slider.noUiSlider.on("start", function () {
+            valueDisplay.style.color = "red";
+          });
+
+          slider.noUiSlider.on("end", function () {
+            valueDisplay.style.color = "black";
+            const jsonString = JSON.stringify(sliderValues);
+            document.cookie = `actualValues=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+          });
+
+          // Increment the counter for sliders in the current row
+          slidersInCurrentRow++;
+
+          // Insert a "row break" after every full row except for the last element
+          if (
+            slidersInCurrentRow ===
+              Math.floor(window.innerWidth / sliderWidthIncludingMargin) - 1 &&
+            i < end - 1
+          ) {
+            let rowBreak = document.createElement("div");
+            rowBreak.style.width = "100%";
+            container.appendChild(rowBreak);
+            // Reset the counter for the next row
+            slidersInCurrentRow = 0;
           }
         }
 
@@ -308,8 +253,17 @@
         updateLayout();
       }
 
-      window.onload = updateLayout;
-      window.onresize = updateLayout;
+      function toggleNavbarHide() {
+        menuEnable = !menuEnable;
+        var navbar = document.getElementById("navbar");
+        if (menuEnable) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
+        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
+        updateLayout();
+      }
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "ArrowLeft") {
@@ -330,6 +284,9 @@
           toggleNavbarHide();
         }
       });
+
+      window.onload = updateLayout();
+      window.onresize = updateLayout();
 
       // Helper Fuctions ------------------------------------------------------
       function getCookie(name) {
@@ -434,6 +391,7 @@
 
           reader.onerror = (error) =>
             console.error("Error reading file:", error);
+
           reader.readAsText(file);
         };
 
@@ -452,34 +410,6 @@
       function handleFileSelect(event) {
         const file = event.target.files[0];
         uploadCookiesFromFile(file);
-      }
-
-      function showPageById(pageId) {
-        // Hide all elements with the class 'page' using the 'hidden' attribute
-        const pages = document.querySelectorAll(".page");
-        pages.forEach((page) => {
-          page.hidden = true;
-        });
-
-        // Remove the 'active-menu-item' class from all menu items
-        document
-          .querySelectorAll(".menu-item")
-          .forEach((item) => item.classList.remove("active-menu-item"));
-
-        // Unhide the element with the specified ID, but only if it has the 'page' class
-        const pageToShow = document.getElementById(pageId);
-        if (pageToShow && pageToShow.classList.contains("page")) {
-          pageToShow.hidden = false; // Use the 'hidden' attribute to show the element
-
-          // Select the element with both classes
-          const element = document.querySelector(
-            `.menu-item[href="#${pageId}"]`
-          );
-          // Add class3 to the element
-          element.classList.add("active-menu-item");
-        } else {
-          console.warn(`No element found with ID '${pageId}' and class 'page'`);
-        }
       }
     </script>
   </body>
