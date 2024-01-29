@@ -34,11 +34,6 @@ html {
   font-weight: bold; /* Make text bold */
 }
 
-.noUi-vertical {
-  height: 200px;
-  margin-top: 12px;
-}
-
 .pagination-footer {
   display: flex;
   justify-content: center;
@@ -61,14 +56,18 @@ html {
   touch-action: manipulation; /* Allow single-finger gestures */
 }
 
-/* Estilo para la barra de progreso del deslizador */
 .noUi-connect {
-  background-color: gray; /* Color gris para el rango seleccionado */
+  background-color: gray; 
 }
 
-/* Estilo para el fondo de la barra del deslizador, si se requiere */
 .noUi-base {
-  background-color: #f1f1f1; /* Color de fondo más claro para el rango no seleccionado */
+  background-color: #f1f1f1; 
+} 
+
+
+.noUi-vertical {
+  height: 200px;
+  margin-top: 12px;
 }
 
 nav ul {
@@ -104,20 +103,20 @@ nav a:hover {
   background-color: #b0b0b0;
   color: black;
 }
-
+/* 
 .disabled-slider .noUi-handle {
-  background: #aaa; /* Gray out the handle */
+  background: #aaa; 
 }
 
 .disabled-slider .noUi-connect {
-  background: #ccc; /* Gray out the connecting bar */
+  background: #ccc; 
 }
 
 .disabled-slider {
-  pointer-events: none; /* Make the slider non-interactive */
-  opacity: 0.5; /* Optional: make the whole slider look faded */
+  pointer-events: none; 
+  opacity: 0.5; 
 }
-
+ */
 .active-menu-item {
   background-color: #ddd;
   color: black;
