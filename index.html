@@ -694,6 +694,28 @@
         }
         return indices;
       }
+
+      // Show Navbar on mousemove
+      document.body.addEventListener("mousemove", function (event) {
+        if (event.clientY <= 5 && !menuEnable) {
+          toggleNavbarHide();
+        }
+      });
+
+      // Hide Navbar on mousemove
+      document.body.addEventListener("mousemove", function (event) {
+        if (event.clientY > 30 && menuEnable) {
+          toggleNavbarHide();
+        }
+      });
+
+      // Show Navbar on touch
+      document.body.addEventListener("touchmove", function (event) {
+        var touch = event.touches[0] || event.changedTouches[0];
+        if (touch.pageY <= 30 && !menuEnable) {
+          toggleNavbarHide();
+        }
+      });
     </script>
   </body>
 </html>
