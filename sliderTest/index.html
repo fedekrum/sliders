@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Sliders</title>
+    <link rel="stylesheet" href="../nouislider.min.css" />
+    <style>
+      #slider-vertical {
+        height: 200px;
+        margin: 20px auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="slider-vertical" tabindex="0"></div>
+    <!-- Agrega tabindex para enfocar -->
+
+    <!-- Primero, cargar la biblioteca noUiSlider -->
+    <script src="../nouislider.min.js"></script>
+
+    <!-- Después, ejecutar tu script personalizado -->
+    <script>
+      var sliderVertical = document.getElementById("slider-vertical");
+
+      noUiSlider.create(sliderVertical, {
+        start: 50, // Valor inicial, ajusta según sea necesario
+        orientation: "vertical",
+        direction: "rtl",
+        connect: true,
+        range: {
+          min: 0,
+          max: 100,
+        },
+        keyboardSupport: true, // Habilitar soporte de teclado
+      });
+
+      // Agregar event listener para el teclado
+      sliderVertical.setAttribute("tabindex", 0); // Asegurar que el div sea enfocable
+      sliderVertical.addEventListener("keydown", function (e) {
+        var value = sliderVertical.noUiSlider.get();
+        var step = sliderVertical.noUiSlider.options.step || 1;
+        switch (e.which) {
+          case 38: // Flecha arriba
+            sliderVertical.noUiSlider.set(parseInt(value) + step);
+            break;
+          case 40: // Flecha abajo
+            sliderVertical.noUiSlider.set(parseInt(value) - step);
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>

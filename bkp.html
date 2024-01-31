@@ -4,69 +4,181 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Responsive Sliders</title>
-    <link href="style.css" rel="stylesheet" />
-    <link href="nouislider.min.css" rel="stylesheet" />
+    <link href="dark.css" rel="stylesheet" />
   </head>
   <body>
     <nav id="navbar" class="navbar" hidden>
       <ul>
-        <li><a href="#setup">Setup</a></li>
-        <li><a href="#file">File</a></li>
-        <li><a href="#mode">Mode</a></li>
-        <li><a href="#sliders">Sliders</a></li>
-        <li><a href="#scenes">Scenes</a></li>
-        <li class="text-right"><span id="viewport"></span>&nbsp</li>
+        <li>
+          <a
+            id="file-menu-item"
+            href="#file"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('file');"
+            >File</a
+          >
+        </li>
+        <li>
+          <a
+            id="console-menu-item"
+            href="#console"
+            class="menu-item active-menu-item"
+            onclick="event.preventDefault(); showPageById('console');"
+            >Console</a
+          >
+        </li>
+        <li>
+          <a
+            id="sliders-menu-item"
+            href="#sliders"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('sliders');"
+            >Operations</a
+          >
+        </li>
+        <li>
+          <a
+            id="scenes-menu-item"
+            href="#scenes"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('scenes');"
+            >Scenes</a
+          >
+        </li>
+        <li>
+          <a
+            id="mode-menu-item"
+            href="#mode"
+            class="menu-item"
+            onclick="event.preventDefault(); showPageById('mode');"
+            >Mode</a
+          >
+        </li>
+        <li class="text-right"><span id="viewport"></span>&nbsp;</li>
       </ul>
     </nav>
-    <div id="sliderContainer" class="slider-container"></div>
-    <footer class="pagination-footer">
-      <div class="pagination">
-        <button id="prevBtn" onclick="changePage(-1)">&nbsp&lt&nbsp</button>
-        <span id="pageInfo"></span>
-        <button id="nextBtn" onclick="changePage(1)">&nbsp&gt&nbsp</button>
-        <button id="fullscreenBtn" onclick="toggleFullscreen()">
-          Fullscreen
-        </button>
-        <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
-        <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+
+    <!-- File -->
+    <div id="file" class="page" hidden>
+      <div id="container" class="container">
         <button id="downloadBtn" onclick="saveCookiesToJson()">
-          Save in Downloads
-        </button>
+          Save in Downloads</button
+        ><br />
         <button id="uploadBtn" onclick="loadCookiesFromJson()">
           Load from File
         </button>
       </div>
-    </footer>
+    </div>
+
+    <!-- Console -->
+    <div id="console" class="page">
+      <div id="sliderContainer" class="slider-container"></div>
+      <footer class="pagination-footer">
+        <div class="pagination">
+          <button id="prevBtn" onclick="changePage(-1)">
+            &nbsp;&lt;&nbsp;
+          </button>
+          <span id="pageInfo"></span>
+          <button id="nextBtn" onclick="changePage(1)">&nbsp;&gt;&nbsp;</button>
+          <button id="fullscreenBtn" onclick="toggleFullscreen()">
+            Fullscreen
+          </button>
+          <button id="blackoutBtn" onclick="toggleBlackout()">BlackOut</button>
+          <button id="navbarBtn" onclick="toggleNavbarHide()">Menu</button>
+
+          <span id="echo"></span>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Sliders -->
+    <div id="sliders" class="page" hidden>
+      <div id="container" class="container">
+        View:<br />
+        <button id="viewAllSlidersBtn" onclick="viewAllSliders()">
+          View all sliders</button
+        ><br />
+        <button id="viewSelectedSlidersBtn" onclick="viewSelectedSliders()">
+          View selected sliders</button
+        ><br /><br />
+        All sliders:<br />
+        <button id="allSlidersToZeroBtn" onclick="allSlidersToZero()">
+          All sliders to zero</button
+        ><br />
+        <button id="allSlidersToFullBtn" onclick="allSlidersToFull()">
+          All sliders to full</button
+        ><br /><br />
+        Sliders selection:<br />
+        <button id="selectNonZeroBtn" onclick="selectNonZeroSliders()">
+          Select non zero sliders
+        </button>
+        <br />
+        <button id="unselectAllBtn" onclick="unselectAllSliders()">
+          Unselect all sliders</button
+        ><br />
+        <button
+          id="riseUpSelectedSlidersBtn"
+          onclick="riseUpAllSelectedSliders()"
+        >
+          Rise up selected sliders
+        </button>
+      </div>
+    </div>
+
+    <!-- Scenes -->
+    <div id="scenes" class="page" hidden>
+      <div id="container" class="container">Scenes</div>
+    </div>
+
+    <!-- Mode -->
+    <div id="mode" class="page" hidden>
+      <div id="container" class="container">Mode</div>
+    </div>
 
     <script src="nouislider.min.js"></script>
     <script>
-      // -------------------------------- Global  Variables ---------------------------------
-      let sliderWidthIncludingMargin = 70;
-      let sliderHeightIncludingMargin = 290;
-      let footerHeight = 30;
-      let menuHeight = 30;
-      let totalSliders = 512; // habra que sacarlo de la cantidad disponibles en el ESPixel
+      let currentPage = 1;
+      let totalSliders = 512;
+      let selectedSliders = [];
+      let slidersPerPage;
+      let totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
+      let sliderValues = [];
       let blackout = false;
       let blackoutTemp = [];
-      let selectedSliders = [];
 
-      let currentPage = 1;
-      let slidersPerPage;
-      let totalNumberOfPages;
+      let sliderWidthIncludingMargin = 70;
+      let sliderHeightIncludingMargin = 290;
 
-      let sliderValues;
-      let menuEnable;
+      // Get the existing <link> element in the head
+      /*       var link = document.querySelector(
+        'link[rel="stylesheet"][href="style.css"]'
+      );
+
+      // Attach an onload event handler to the <link> element
+      link.onload = function () {
+        // CSS file has loaded, now you can get the computed style
+        const element = document.querySelector(".noUi-vertical");
+        const computedStyle = window.getComputedStyle(element);
+        sliderHeightIncludingMargin =
+          computedStyle.getPropertyValue("height") + 90;
+        updateLayout();
+      }; */
+
+      let footerHeight = 30;
+      let menuHeight = 30;
+      let onlySelectedSliders = false;
+      let xxx = 0;
 
       // -------------------------------- Get , Set and refresh Cookies ---------------------------------
 
-      // actualValues
-      if (doesCookieExist("actualValues")) {
-        let jsonString = getCookie("actualValues");
+      // sliderValues
+      if (doesCookieExist("sliderValues")) {
+        let jsonString = getCookie("sliderValues");
         sliderValues = jsonString ? JSON.parse(jsonString) : [];
       } else {
         sliderValues = new Array(totalSliders).fill(0);
       }
-      setCookie("actualValues", JSON.stringify(sliderValues), 400);
+      setCookie("sliderValues", JSON.stringify(sliderValues), 400);
 
       // selectedSliders
       if (doesCookieExist("selectedSliders")) {
@@ -85,8 +197,12 @@
       }
       setCookie("menuEnable", JSON.stringify(menuEnable), 400);
 
+      // --------------------------------- Update layout ---------------------------------
+
+      // ----------------------------------------------------------------------------------
+      // ----------------------------------------------------------------------------------
+      // ----------------------------------------------------------------------------------
       function updateLayout() {
-        // -------------------------------- Calculations ---------------------------------
         // Calcular el número de deslizadores por fila
         const slidersPerRow = Math.floor(
           window.innerWidth / sliderWidthIncludingMargin
@@ -98,9 +214,24 @@
             sliderHeightIncludingMargin
         );
 
+        // Actualizar el texto del viewport en la página
+        document.getElementById(
+          "viewport"
+        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
+        // Actualizar Navbar (visibilidad)
+        var navbar = document.getElementById("navbar");
+        if (menuEnable) {
+          navbar.removeAttribute("hidden");
+        } else {
+          navbar.setAttribute("hidden", "true");
+        }
+
+        // Vaciar el contenedor de sliders
         const container = document.getElementById("sliderContainer");
         container.innerHTML = "";
 
+        // Calcular el número sliders por pagina
         slidersPerPage =
           Math.floor(window.innerWidth / sliderWidthIncludingMargin - 1) *
           Math.floor(
@@ -109,99 +240,118 @@
               (menuEnable ? menuHeight : 0)) /
               sliderHeightIncludingMargin
           );
+
+        // Calcular el número total de paginas
         totalNumberOfPages = Math.ceil(totalSliders / slidersPerPage);
 
-        let start = (currentPage - 1) * slidersPerPage;
-        let end = Math.min(start + slidersPerPage, totalSliders);
-        let slidersInCurrentRow = 0;
+        let start = (currentPage - 1) * slidersPerPage; //
+        let end = Math.min(start + slidersPerPage, totalSliders); // si el final es mayor que el total de sliders, el final es el total de sliders
+        let slidersInCurrentRow = 0; // inicializar el contador de sliders en la fila
 
-        // -------------------------------- View ---------------------------------
-
-        // Actualizael navbar
-        var navbar = document.getElementById("navbar");
-        if (menuEnable) {
-          navbar.removeAttribute("hidden");
-        } else {
-          navbar.setAttribute("hidden", "true");
-        }
-
-        // Actualizar el texto del viewport en la página
-        document.getElementById(
-          "viewport"
-        ).textContent = `${window.innerWidth} x ${window.innerHeight}`;
+        // ----------------------------------------------------------------------------------
+        // --------------------------------- Render sliders ---------------------------------
+        // ----------------------------------------------------------------------------------
 
         for (let i = start; i < end; i++) {
-          let sliderWrapper = document.createElement("div");
-          sliderWrapper.classList.add("slider-wrapper");
+          // i tiene que ser el nombre real
 
-          let nameLabel = document.createElement("div");
-          nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
-          sliderWrapper.appendChild(nameLabel);
+          // debo recorrer TODOS los valores, establecer en que valor empieza la pagina y en cual termina
+          //hacer los saltos de linea
+          // detectar el ultimo deslizador de la pagina
+          if (true) {
+            let sliderWrapper = document.createElement("div");
+            sliderWrapper.classList.add("slider-wrapper");
 
-          let valueDisplay = document.createElement("div");
-          valueDisplay.textContent = sliderValues[i];
-          sliderWrapper.appendChild(valueDisplay);
+            let nameLabel = document.createElement("div");
+            nameLabel.textContent = `${String(i + 1).padStart(3, "0")}`;
+            sliderWrapper.appendChild(nameLabel);
+            nameLabel.style.color = "white";
 
-          let slider = document.createElement("div");
-          sliderWrapper.appendChild(slider);
-          container.appendChild(sliderWrapper);
+            let valueDisplay = document.createElement("div");
+            valueDisplay.textContent = sliderValues[i];
+            sliderWrapper.appendChild(valueDisplay);
+            valueDisplay.style.color = "white";
 
-          noUiSlider.create(slider, {
-            start: sliderValues[i],
-            orientation: "vertical",
-            direction: "rtl",
-            range: {
-              min: 0,
-              max: 255,
-            },
-            connect: [true, false], // Conecta el rango inferior a la manija del deslizador
-            // ... cualquier otra configuración ...
-          });
+            let slider = document.createElement("div");
+            sliderWrapper.appendChild(slider);
+            container.appendChild(sliderWrapper);
 
-          slider.noUiSlider.on("update", function (values, handle) {
-            let value = Math.trunc(values[handle]);
-            if (!blackout) {
-              valueDisplay.textContent = value;
-              sliderValues[i] = value;
+            noUiSlider.create(slider, {
+              start: sliderValues[i],
+              orientation: "vertical",
+              direction: "rtl",
+              range: {
+                min: 0,
+                max: 255,
+              },
+              connect: [true, false], // Conecta el rango inferior a la manija del deslizador
+              // ... cualquier otra configuración ...
+            });
+
+            // Establecer el color de la manija
+            const knob = slider.querySelector(".noUi-handle");
+            if (onlySelectedSliders) {
+              knob.style.backgroundColor = "#015d6e";
+            } else {
+              if (selectedSliders[i]) {
+                knob.style.backgroundColor = "#016e01";
+              } else {
+                knob.style.backgroundColor = "#540000";
+              }
             }
-          });
 
-          slider.noUiSlider.on("start", function () {
-            valueDisplay.style.color = "red";
-          });
+            slider.noUiSlider.on("update", function (values, handle) {
+              let value = Math.trunc(values[handle]);
+              if (!blackout) {
+                valueDisplay.textContent = value;
+                sliderValues[i] = value;
+              }
+              document.getElementById("echo").textContent = i + 1 + " " + xxx;
+            });
 
-          slider.noUiSlider.on("end", function () {
-            valueDisplay.style.color = "black";
-            const jsonString = JSON.stringify(sliderValues);
-            document.cookie = `actualValues=${jsonString};path=/;expires=Fri, 31 Dec 9999 23:59:59 GMT`;
-          });
+            slider.noUiSlider.on("start", function () {
+              valueDisplay.style.color = "red";
+            });
 
-          // Increment the counter for sliders in the current row
-          slidersInCurrentRow++;
+            slider.noUiSlider.on("end", function () {
+              valueDisplay.style.color = "white";
+              setCookie("sliderValues", JSON.stringify(sliderValues), 400);
+            });
 
-          // Insert a "row break" after every full row except for the last element
-          if (
-            slidersInCurrentRow ===
-              Math.floor(window.innerWidth / sliderWidthIncludingMargin) - 1 &&
-            i < end - 1
-          ) {
-            let rowBreak = document.createElement("div");
-            rowBreak.style.width = "100%";
-            container.appendChild(rowBreak);
-            // Reset the counter for the next row
-            slidersInCurrentRow = 0;
+            // Increment the counter for sliders in the current row
+            slidersInCurrentRow++;
+
+            // Insert a "row break" after every full row except for the last element
+            if (
+              slidersInCurrentRow ===
+                Math.floor(window.innerWidth / sliderWidthIncludingMargin) -
+                  1 &&
+              i < end - 1
+            ) {
+              let rowBreak = document.createElement("div");
+              rowBreak.style.width = "100%";
+              container.appendChild(rowBreak);
+              // Reset the counter for the next row
+              slidersInCurrentRow = 0;
+            }
           }
         }
+
+        // ----------------------------------------------------------------------------------
+        // ----------------------------------------------------------------------------------
+        // ----------------------------------------------------------------------------------
 
         updatePaginationInfo();
       }
 
+      // --------------------------------- Change page ---------------------------------
       function changePage(direction) {
         currentPage += direction;
         currentPage = Math.max(1, Math.min(currentPage, totalNumberOfPages));
         updateLayout();
       }
 
+      // --------------------------------- Update pagination info ---------------------------------
       function updatePaginationInfo() {
         document.getElementById(
           "pageInfo"
@@ -235,7 +385,7 @@
           }
         }
       }
-
+      // Toggle blackout
       function toggleBlackout() {
         blackout = !blackout;
         if (blackout) {
@@ -247,24 +397,17 @@
         updateLayout();
       }
 
+      // Toggle Navbar Hide
       function toggleNavbarHide() {
         menuEnable = !menuEnable;
         setCookie("menuEnable", JSON.stringify(menuEnable), 365);
         updateLayout();
       }
 
-      function toggleNavbarHide() {
-        menuEnable = !menuEnable;
-        var navbar = document.getElementById("navbar");
-        if (menuEnable) {
-          navbar.removeAttribute("hidden");
-        } else {
-          navbar.setAttribute("hidden", "true");
-        }
-        setCookie("menuEnable", JSON.stringify(menuEnable), 365);
-        updateLayout();
-      }
+      window.onload = updateLayout;
+      window.onresize = updateLayout;
 
+      // keyboard controls
       document.addEventListener("keydown", (event) => {
         if (event.key === "ArrowLeft") {
           changePage(-1);
@@ -285,10 +428,9 @@
         }
       });
 
-      window.onload = updateLayout();
-      window.onresize = updateLayout();
-
       // Helper Fuctions ------------------------------------------------------
+
+      // Cookie Get
       function getCookie(name) {
         const nameEQ = name + "=";
         const ca = document.cookie.split(";");
@@ -301,6 +443,7 @@
         return null;
       }
 
+      // Cookie Set
       function setCookie(name, value, days = 400) {
         let expires = "";
         if (days) {
@@ -309,10 +452,11 @@
           expires = "; expires=" + date.toUTCString();
         }
         const cookieString = name + "=" + (value || "") + expires + "; path=/";
-        console.log("Setting cookie:", cookieString); // Log the cookie string
+        //console.log("Setting cookie:", cookieString); // Log the cookie string
         document.cookie = cookieString;
       }
 
+      // Check if cookie exists
       function doesCookieExist(name) {
         // Create the cookie name string with equal sign
         const nameEQ = name + "=";
@@ -329,7 +473,7 @@
         return false;
       }
 
-      // Download cookies to a file
+      // Save cookies to a file
       function saveCookiesToJson(filename = "ConsoleConfig.json") {
         const cookies = document.cookie.split(";");
         const cookieJson = {};
@@ -352,9 +496,11 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        updateLayout();
+        showPageById("console");
       }
 
-      // Upload cookies from a file
+      // Load cookies from a file
       function loadCookiesFromJson() {
         const input = document.createElement("input");
         input.type = "file";
@@ -376,40 +522,121 @@
                 console.log(`Setting cookie: ${name} = ${cookies[name]}`);
                 setCookie(name, cookies[name]);
               });
-              console.log("All cookies set.");
 
-              // Call updateLayout here, after all cookies are set
-              let jsonString = getCookie("actualValues");
+              // console.log("All cookies set.");
+              let jsonString = getCookie("sliderValues");
               sliderValues = jsonString ? JSON.parse(jsonString) : [];
-              jsonString = getCookie("menuEnable");
-              menuEnable = jsonString ? JSON.parse(jsonString) : [];
+              jsonString = getCookie("selectedSliders");
+              selectedSliders = jsonString ? JSON.parse(jsonString) : [];
               updateLayout();
+              showPageById("console");
             } catch (error) {
-              console.error("Error parsing JSON:", error);
+              // console.error("Error parsing JSON:", error);
             }
           };
 
           reader.onerror = (error) =>
             console.error("Error reading file:", error);
-
           reader.readAsText(file);
         };
 
         input.click();
-        let jsonString = getCookie("actualValues");
-        sliderValues = jsonString ? JSON.parse(jsonString) : [];
-        jsonString = getCookie("menuEnable");
-        menuEnable = jsonString ? JSON.parse(jsonString) : [];
       }
 
-      function openFileInput() {
-        const fileInput = document.getElementById("fileInput");
-        fileInput.click();
+      // Show Page by ID
+      function showPageById(pageId) {
+        // Hide all elements with the class 'page' using the 'hidden' attribute
+        const pages = document.querySelectorAll(".page");
+        pages.forEach((page) => {
+          page.hidden = true;
+        });
+
+        // Remove the 'active-menu-item' class from all menu items
+        document
+          .querySelectorAll(".menu-item")
+          .forEach((item) => item.classList.remove("active-menu-item"));
+
+        // Unhide the element with the specified ID, but only if it has the 'page' class
+        const pageToShow = document.getElementById(pageId);
+        if (pageToShow && pageToShow.classList.contains("page")) {
+          pageToShow.hidden = false; // Use the 'hidden' attribute to show the element
+
+          // Select the element with both classes
+          const element = document.querySelector(
+            `.menu-item[href="#${pageId}"]`
+          );
+          // Add class3 to the element
+          element.classList.add("active-menu-item");
+        } else {
+          console.warn(`No element found with ID '${pageId}' and class 'page'`);
+        }
       }
 
-      function handleFileSelect(event) {
-        const file = event.target.files[0];
-        uploadCookiesFromFile(file);
+      // --------------------------------- Operations ---------------------------------
+      // Select Non Zero Sliders
+      function selectNonZeroSliders() {
+        for (let i = 0; i < totalSliders; i++) {
+          if (sliderValues[i] > 0) {
+            selectedSliders[i] = 1;
+          } else {
+            selectedSliders[i] = 0;
+          }
+        }
+        setCookie("selectedSliders", JSON.stringify(selectedSliders), 400);
+        updateLayout();
+        showPageById("console");
+      }
+
+      // Unselect All Sliders
+      function unselectAllSliders() {
+        selectedSliders = new Array(totalSliders).fill(0);
+        setCookie("selectedSliders", JSON.stringify(selectedSliders), 400);
+        updateLayout();
+        showPageById("console");
+      }
+
+      // All Sliders To Zero
+      function allSlidersToZero() {
+        sliderValues = new Array(totalSliders).fill(0);
+        setCookie("sliderValues", JSON.stringify(sliderValues), 400);
+        updateLayout();
+        showPageById("console");
+      }
+
+      // All Sliders To Full
+      function allSlidersToFull() {
+        sliderValues = new Array(totalSliders).fill(255);
+        setCookie("sliderValues", JSON.stringify(sliderValues), 400);
+        updateLayout();
+        showPageById("console");
+      }
+
+      // Rise up all selected sliders to 255
+      function riseUpAllSelectedSliders() {
+        for (let i = 0; i < totalSliders; i++) {
+          if (selectedSliders[i] == 1) {
+            sliderValues[i] = 255;
+          } else {
+            sliderValues[i] = 0;
+          }
+        }
+        setCookie("sliderValues", JSON.stringify(sliderValues), 400);
+        updateLayout();
+        showPageById("console");
+      }
+
+      // View all sliders
+      function viewAllSliders() {
+        // no hace nada
+        updateLayout();
+        showPageById("console");
+      }
+
+      //View selected sliders
+      function viewSelectedSliders() {
+        // no hace nada
+        updateLayout();
+        showPageById("console");
       }
     </script>
   </body>

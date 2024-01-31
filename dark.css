@@ -1,10 +1,13 @@
+@import "nouislider.min.css";
 
 body,
 html {
   margin: 0;
   padding: 0;
   height: 100%;
+  background-color: #000000;
   box-sizing: border-box;
+  color: #fff;
   font-family: "Courier New", Courier, monospace; /* Apply monospace font */
   overscroll-behavior: none; /* Disable pull-to-refresh and other overscroll effects */
   user-select: none; /* Disable text selection */
@@ -49,26 +52,37 @@ html {
   display: flex;
   justify-content: center;
   align-items: center;
+  color: #000000;
 }
 
 .pagination button {
   margin: 0 10px;
   touch-action: manipulation; /* Allow single-finger gestures */
+  color: #000000;
 }
 
-.noUi-connect {
-  background-color: gray; 
-}
+/* .noUi-connect {
+  background-color: rgb(42, 13, 190); 
+} */
 
 .noUi-base {
-  background-color: #f1f1f1; 
+  background-color: #001115; 
 } 
-
 
 .noUi-vertical {
   height: 200px;
   margin-top: 12px;
 }
+
+.noUi-handle {
+  background-color:#ffffff; /*no afecta. se cambia en el programa*/
+  border-color: #000000;
+}
+
+.noUi-connect {
+    background: #919191 !important;
+}
+
 
 nav ul {
   list-style-type: none;
