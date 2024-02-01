@@ -140,21 +140,22 @@
       let currentPage = 1;
       let slidersPerPage;
       let totalNumberOfPages;
-      let blackout = false;
       let blackoutTemp = [];
 
       let sliderWidthIncludingMargin = 70;
       let sliderHeightIncludingMargin = 290;
 
-      let footerHeight = 30;
-      let menuHeight = 30;
-      let onlySelectedSliders = false;
+      let footerHeight = 34;
+      let menuHeight = 34;
       let actualIndex = [];
       let actualIndexLength;
+
+      // Flags ------------------------------------------------------------------
+      let blackout = false;
+      let onlySelectedSliders = false;
       let sliderMoving = false;
       let menuEnable = true;
-
-      let updateLayoutFlag = false;
+      let isUpdatingLayout = false; //En caso que se quiera ejecutar cuando ya se esta ejecutando la actualizacion del layout
 
       // -------------------------------- Get , Set and refresh Cookies ---------------------------------
 
@@ -200,8 +201,8 @@
       // ----------------------------------------------------------------------------------
       // ----------------------------------------------------------------------------------
       function updateLayout() {
-        if (!updateLayoutFlag) {
-          updateLayoutFlag = true;
+        if (!isUpdatingLayout) {
+          isUpdatingLayout = true;
 
           // selecionar todos los sliders o solo los seleccionados
           if (onlySelectedSliders) {
@@ -356,7 +357,7 @@
           // ----------------------------------------------------------------------------------
 
           updatePaginationInfo();
-          updateLayoutFlag = false;
+          isUpdatingLayout = false;
         }
       }
 
